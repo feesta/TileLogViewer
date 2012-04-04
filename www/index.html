@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://raw.github.com/stamen/modestmaps-js/3149870daf5630cb894c1b863b355afbe0b93b5c/modestmaps.min.js"></script>
+<script type="text/javascript" src="js/JSONModestMaps.js"></script>
+
+
+
+<style>
+body {margin:0; padding:0;}
+#map {height:100%; width:100%; position:absolute; overflow:hidden;}
+#map .jsonlayer {background-color:transparent; height:256px; width:256px; opacity:1; position:absolute; margin:0; padding:0;}
+#buttons {position:absolute; right:10px;}
+</style>
+
+
+
+<script type="text/javascript">
+
+var MM = com.modestmaps; // "import" the namespace
+var map, hash, jsonlayer, jsonurl, tilelayer;
+
+
+var zoomColors = [
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(255,255,255)",
+                  "rgb(225,225,225)",
+                  "rgb(178,178,178)",
+                  "rgb(150,196,56)",
+                  "rgb(203,219,62)",
+                  "rgb(255,242,69)",
+                  "rgb(255,183,47)",
+                  "rgb(226,102,75)",
+                  "rgb(253,86,191)",
+                  "rgb(117,16,0)",
+                  "rgb(83,0,39)",
+                  "rgb(40,0,58)",
+                  "rgb(5,5,5)",
+                  "rgb(5,5,5)",
+                  "rgb(5,5,5)",
+                  "rgb(5,5,5)"
+                  ];
+
+function initMap() {
+    jsonurl = 'http://brillo.stamen.com/~jeff/maptiles/tile.cgi?x={X}&y={Y}&z={Z}';
+    jsonlayer = new MM.JSONLayer(new MM.TemplatedMapProvider(jsonurl));
+
+    map = new MM.Map('map', jsonlayer);
+    hash = new MM.JSONHash(map);
+
+    if (document.location.hash) {
+        var h = document.location.hash.substring(1);
+        zxy = h.split('/');
+        if(zxy.length == 3) {
+            map.setCenterZoom(new MM.Location(zxy[1], zxy[2]), zxy[0]);
+        } else {
+            hash.currentLayer = zxy[0];
+            map.setCenterZoom(new MM.Location(zxy[2], zxy[3]), zxy[1]);
+        }
+    } else map.setCenterZoom(new MM.Location(30, -10), 4);
+    
+    
+    //map.addLayer(jsonlayer);
+    
+    updateBaseLayer(hash.currentLayer);
+
+}
+function updateBaseLayer(layer) {
+    if(!layer || !(layer.length > 0)) layer = 'toner'; 
+    //tilelayer.setProvider(new MM.TemplatedMapProvider("http://tile.stamen.com/" + layer + "/{Z}/{X}/{Y}.png"));
+    tilelayer = new MM.Layer(new MM.TemplatedMapProvider("http://acetate.geoiq.com/tiles/acetate-labels/{Z}/{X}/{Y}.png"));
+    map.addLayer(tilelayer);
+}
+function updateJSONLayer() {
+    if (hash.currentLayer.length > 0) 
+        jsonlayer.setProvider(new MM.TemplatedMapProvider(jsonurl + "&layer=" + hash.currentLayer)); 
+    else jsonlayer.setProvider(new MM.TemplatedMapProvider(jsonurl)); 
+}
+function switchJSONLayer(layer) {
+    hash.currentLayer = layer;
+    updateJSONLayer();
+    var hash_str = hash.formatHash(map);
+    location.replace(hash_str);
+    hash.lastHash = hash_str;
+    updateBaseLayer(hash.currentLayer);
+}
+
+
+$(function(){
+    $("a").click(function(){
+        return false;
+    });    
+    
+    $(window).keypress(function(e){
+        console.info(e.which + ' pressed so hiding labels.');
+        if (map.getLayers().length == 2) {
+            map.removeLayer(tilelayer);
+        } 
+    });
+});
+</script>
+</head>
+
+
+
+
+
+<body onload="initMap()">
+
+<div id='map'></div>
+
+<!--
+<div id='buttons'>
+switch to:<br>
+<a href='#' onclick='switchJSONLayer("toner");'>toner</a><br>
+<a href='#' onclick='switchJSONLayer("watercolor");'>watercolor</a><br>
+<a href='#' onclick='switchJSONLayer("terrain");'>terrain</a><br>
+<a href='#' onclick='switchJSONLayer("");'>show all</a><br>
+</div>
+-->
+</body></html>
